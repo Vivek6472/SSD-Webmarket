@@ -3,7 +3,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
 from model import SSD300, MultiBoxLoss
-from datasets import PascalVOCDataset
+from datasets import WebMarketDatset
 from utils import *
 
 # Data parameters
@@ -16,7 +16,6 @@ n_classes = len(label_map)  # number of different types of objects
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Learning parameters
-checkpoint = None  # path to model checkpoint, None if none
 batch_size = 8  # batch size
 start_epoch = 0  # start at this epoch
 epochs = 200  # number of epochs to run without early-stopping
@@ -36,11 +35,9 @@ def main():
     """
     Training and validation.
     """
-    global epochs_since_improvement, start_epoch, label_map, best_loss, epoch, checkpoint
-
-    # Initialize model or load checkpoint
-    if checkpoint is None:
-        model = SSD300(n_classes=n_classes)
+    global epochs_since_improvement, start_epoch, label_map, best_loss, epoch
+    # Initialize model 
+    model = SSD300(n_classes=n_classes)
         # Initialize the optimizer, with twice the default learning rate for biases, as in the original Caffe repo
         biases = list()
         not_biases = list()
@@ -53,24 +50,15 @@ def main():
         optimizer = torch.optim.SGD(params=[{'params': biases, 'lr': 2 * lr}, {'params': not_biases}],
                                     lr=lr, momentum=momentum, weight_decay=weight_decay)
 
-    else:
-        checkpoint = torch.load(checkpoint)
-        start_epoch = checkpoint['epoch'] + 1
-        epochs_since_improvement = checkpoint['epochs_since_improvement']
-        best_loss = checkpoint['best_loss']
-        print('\nLoaded checkpoint from epoch %d. Best loss so far is %.3f.\n' % (start_epoch, best_loss))
-        model = checkpoint['model']
-        optimizer = checkpoint['optimizer']
-
     # Move to default device
     model = model.to(device)
     criterion = MultiBoxLoss(priors_cxcy=model.priors_cxcy).to(device)
 
     # Custom dataloaders
-    train_dataset = PascalVOCDataset(data_folder,
+    train_dataset = WebMarketDataset(data_folder,
                                      split='train',
                                      keep_difficult=keep_difficult)
-    val_dataset = PascalVOCDataset(data_folder,
+    val_dataset = WebMarketDataset(data_folder,
                                    split='test',
                                    keep_difficult=keep_difficult)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
@@ -115,9 +103,6 @@ def main():
 
         else:
             epochs_since_improvement = 0
-
-        # Save checkpoint
-        save_checkpoint(epoch, epochs_since_improvement, model, optimizer, val_loss, best_loss, is_best)
 
 
 def train(train_loader, model, criterion, optimizer, epoch):
