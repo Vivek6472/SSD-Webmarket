@@ -8,19 +8,16 @@ import torchvision.transforms.functional as FT
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Label map
-voc_labels = ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable',
-              'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor')
-label_map = {k: v + 1 for v, k in enumerate(voc_labels)}
+labels = ('gap',)
+label_map = {k: v + 1 for v, k in enumerate(labels)}
 label_map['background'] = 0
 rev_label_map = {v: k for k, v in label_map.items()}  # Inverse mapping
 
 # Color map for bounding boxes of detected objects from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
-distinct_colors = ['#e6194b', '#3cb44b', '#ffe119', '#0082c8', '#f58231', '#911eb4', '#46f0f0', '#f032e6',
-                   '#d2f53c', '#fabebe', '#008080', '#000080', '#aa6e28', '#fffac8', '#800000', '#aaffc3', '#808000',
-                   '#ffd8b1', '#e6beff', '#808080', '#FFFFFF']
+distinct_colors = ['#e6194b', '#808080]
 label_color_map = {k: distinct_colors[i] for i, k in enumerate(label_map.keys())}
 
-
+'''
 def parse_annotation(annotation_path):
     tree = ET.parse(annotation_path)
     root = tree.getroot()
@@ -122,7 +119,7 @@ def create_data_lists(voc07_path, voc12_path, output_folder):
     print('\nThere are %d validation images containing a total of %d objects. Files have been saved to %s.' % (
         len(test_images), n_objects, os.path.abspath(output_folder)))
 
-
+'''
 def decimate(tensor, m):
     """
     Decimate a tensor by a factor 'm', i.e. downsample by keeping every 'm'th value.
@@ -665,7 +662,7 @@ def accuracy(scores, targets, k):
     correct_total = correct.view(-1).float().sum()  # 0D tensor
     return correct_total.item() * (100.0 / batch_size)
 
-
+'''
 def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, best_loss, is_best):
     """
     Save model checkpoint.
@@ -690,7 +687,7 @@ def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, bes
     if is_best:
         torch.save(state, 'BEST_' + filename)
 
-
+'''
 class AverageMeter(object):
     """
     Keeps track of most recent, average, sum, and count of a metric.
