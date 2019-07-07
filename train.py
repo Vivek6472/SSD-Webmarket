@@ -1,13 +1,15 @@
 import time
+
 import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
+
+from datasets import WebMarketDataset
 from model import SSD300, MultiBoxLoss
-from datasets import WebMarketDatset
 from utils import *
 
 # Data parameters
-data_folder = './'  # folder with data files
+data_folder = './data/train'  # folder with data files
 keep_difficult = True  # use objects considered difficult to detect?
 
 # Model parameters
@@ -18,7 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Learning parameters
 batch_size = 8  # batch size
 start_epoch = 0  # start at this epoch
-epochs = 200  # number of epochs to run without early-stopping
+epochs = 50  # number of epochs to run without early-stopping
 epochs_since_improvement = 0  # number of epochs since there was an improvement in the validation metric
 best_loss = 100.  # assume a high loss at first
 workers = 4  # number of workers for loading data in the DataLoader
@@ -38,17 +40,18 @@ def main():
     global epochs_since_improvement, start_epoch, label_map, best_loss, epoch
     # Initialize model 
     model = SSD300(n_classes=n_classes)
-        # Initialize the optimizer, with twice the default learning rate for biases, as in the original Caffe repo
-        biases = list()
-        not_biases = list()
-        for param_name, param in model.named_parameters():
-            if param.requires_grad:
-                if param_name.endswith('.bias'):
-                    biases.append(param)
-                else:
-                    not_biases.append(param)
-        optimizer = torch.optim.SGD(params=[{'params': biases, 'lr': 2 * lr}, {'params': not_biases}],
-                                    lr=lr, momentum=momentum, weight_decay=weight_decay)
+    # Initialize the optimizer, with twice the default learning rate for biases, as in the original Caffe repo
+    biases = list()
+    not_biases = list()
+    for param_name, param in model.named_parameters():
+        if param.requires_grad:
+            if param_name.endswith('.bias'):
+                biases.append(param)
+            else:
+                not_biases.append(param)
+    optimizer = torch.optim.SGD(params=[{'params': biases, 'lr': 2 * lr}, {'params': not_biases}],
+                                lr=lr, momentum=momentum, weight_decay=weight_decay)
+
 
     # Move to default device
     model = model.to(device)

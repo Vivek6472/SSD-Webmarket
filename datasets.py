@@ -29,7 +29,7 @@ class WebMarketDataset(Dataset):
             self.images = json.load(j)
         with open(os.path.join(data_folder, self.split + '_objects.json'), 'r') as j:
             self.objects = json.load(j)
-
+        print(len(self.images), len(self.objects))
         assert len(self.images) == len(self.objects)
 
     def __getitem__(self, i):

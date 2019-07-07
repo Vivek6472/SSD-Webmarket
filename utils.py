@@ -10,11 +10,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Label map
 labels = ('gap',)
 label_map = {k: v + 1 for v, k in enumerate(labels)}
-label_map['background'] = 0
+label_map['__background__'] = 0
 rev_label_map = {v: k for k, v in label_map.items()}  # Inverse mapping
 
 # Color map for bounding boxes of detected objects from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
-distinct_colors = ['#e6194b', '#808080]
+distinct_colors = ['#e6194b', '#808080']
 label_color_map = {k: distinct_colors[i] for i, k in enumerate(label_map.keys())}
 
 '''
