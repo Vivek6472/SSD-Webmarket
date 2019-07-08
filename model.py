@@ -206,12 +206,20 @@ class PredictionConvolutions(nn.Module):
         self.n_classes = n_classes
 
         # Number of prior-boxes we are considering per position in each feature map
+        '''
         n_boxes = {'conv4_3': 4,
                    'conv7': 6,
                    'conv8_2': 6,
                    'conv9_2': 6,
                    'conv10_2': 4,
                    'conv11_2': 4}
+        '''
+        n_boxes = {'conv4_3': 4,
+                   'conv7': 6,
+                   'conv8_2': 6,
+                   'conv9_2': 6,
+                   'conv10_2': 4}
+        
         # 4 prior-boxes implies we use 4 different aspect ratios, etc.
 
         # Localization prediction convolutions (predict offsets w.r.t prior-boxes)
@@ -220,7 +228,7 @@ class PredictionConvolutions(nn.Module):
         self.loc_conv8_2 = nn.Conv2d(512, n_boxes['conv8_2'] * 4, kernel_size=3, padding=1)
         self.loc_conv9_2 = nn.Conv2d(256, n_boxes['conv9_2'] * 4, kernel_size=3, padding=1)
         self.loc_conv10_2 = nn.Conv2d(256, n_boxes['conv10_2'] * 4, kernel_size=3, padding=1)
-        self.loc_conv11_2 = nn.Conv2d(256, n_boxes['conv11_2'] * 4, kernel_size=3, padding=1)
+        #self.loc_conv11_2 = nn.Conv2d(256, n_boxes['conv11_2'] * 4, kernel_size=3, padding=1)
 
         # Class prediction convolutions (predict classes in localization boxes)
         self.cl_conv4_3 = nn.Conv2d(512, n_boxes['conv4_3'] * n_classes, kernel_size=3, padding=1)
@@ -228,7 +236,7 @@ class PredictionConvolutions(nn.Module):
         self.cl_conv8_2 = nn.Conv2d(512, n_boxes['conv8_2'] * n_classes, kernel_size=3, padding=1)
         self.cl_conv9_2 = nn.Conv2d(256, n_boxes['conv9_2'] * n_classes, kernel_size=3, padding=1)
         self.cl_conv10_2 = nn.Conv2d(256, n_boxes['conv10_2'] * n_classes, kernel_size=3, padding=1)
-        self.cl_conv11_2 = nn.Conv2d(256, n_boxes['conv11_2'] * n_classes, kernel_size=3, padding=1)
+        #self.cl_conv11_2 = nn.Conv2d(256, n_boxes['conv11_2'] * n_classes, kernel_size=3, padding=1)
 
         # Initialize convolutions' parameters
         self.init_conv2d()
@@ -279,9 +287,9 @@ class PredictionConvolutions(nn.Module):
         l_conv10_2 = l_conv10_2.permute(0, 2, 3, 1).contiguous()  # (N, 3, 3, 16)
         l_conv10_2 = l_conv10_2.view(batch_size, -1, 4)  # (N, 36, 4)
 
-        l_conv11_2 = self.loc_conv11_2(conv11_2_feats)  # (N, 16, 1, 1)
-        l_conv11_2 = l_conv11_2.permute(0, 2, 3, 1).contiguous()  # (N, 1, 1, 16)
-        l_conv11_2 = l_conv11_2.view(batch_size, -1, 4)  # (N, 4, 4)
+        #l_conv11_2 = self.loc_conv11_2(conv11_2_feats)  # (N, 16, 1, 1)
+        #l_conv11_2 = l_conv11_2.permute(0, 2, 3, 1).contiguous()  # (N, 1, 1, 16)
+        #l_conv11_2 = l_conv11_2.view(batch_size, -1, 4)  # (N, 4, 4)
 
         # Predict classes in localization boxes
         c_conv4_3 = self.cl_conv4_3(conv4_3_feats)  # (N, 4 * n_classes, 38, 38)
@@ -307,16 +315,21 @@ class PredictionConvolutions(nn.Module):
         c_conv10_2 = c_conv10_2.permute(0, 2, 3, 1).contiguous()  # (N, 3, 3, 4 * n_classes)
         c_conv10_2 = c_conv10_2.view(batch_size, -1, self.n_classes)  # (N, 36, n_classes)
 
-        c_conv11_2 = self.cl_conv11_2(conv11_2_feats)  # (N, 4 * n_classes, 1, 1)
-        c_conv11_2 = c_conv11_2.permute(0, 2, 3, 1).contiguous()  # (N, 1, 1, 4 * n_classes)
-        c_conv11_2 = c_conv11_2.view(batch_size, -1, self.n_classes)  # (N, 4, n_classes)
+        #c_conv11_2 = self.cl_conv11_2(conv11_2_feats)  # (N, 4 * n_classes, 1, 1)
+        #c_conv11_2 = c_conv11_2.permute(0, 2, 3, 1).contiguous()  # (N, 1, 1, 4 * n_classes)
+        #c_conv11_2 = c_conv11_2.view(batch_size, -1, self.n_classes)  # (N, 4, n_classes)
 
         # A total of 8732 boxes
         # Concatenate in this specific order (i.e. must match the order of the prior-boxes)
+        '''
         locs = torch.cat([l_conv4_3, l_conv7, l_conv8_2, l_conv9_2, l_conv10_2, l_conv11_2], dim=1)  # (N, 8732, 4)
         classes_scores = torch.cat([c_conv4_3, c_conv7, c_conv8_2, c_conv9_2, c_conv10_2, c_conv11_2],
                                    dim=1)  # (N, 8732, n_classes)
-
+        '''
+        locs = torch.cat([l_conv4_3, l_conv7, l_conv8_2, l_conv9_2, l_conv10_2], dim=1)  # (N, 8732, 4)
+        classes_scores = torch.cat([c_conv4_3, c_conv7, c_conv8_2, c_conv9_2, c_conv10_2],
+                                   dim=1)  # (N, 8732, n_classes)
+        
         return locs, classes_scores
 
 
@@ -358,6 +371,7 @@ class SSD300(nn.Module):
         conv4_3_feats = conv4_3_feats * self.rescale_factors  # (N, 512, 38, 38)
         # (PyTorch autobroadcasts singleton dimensions during arithmetic)
 
+        '''
         # Run auxiliary convolutions (higher level feature map generators)
         conv8_2_feats, conv9_2_feats, conv10_2_feats, conv11_2_feats = \
             self.aux_convs(conv7_feats)  # (N, 512, 10, 10),  (N, 256, 5, 5), (N, 256, 3, 3), (N, 256, 1, 1)
@@ -365,6 +379,13 @@ class SSD300(nn.Module):
         # Run prediction convolutions (predict offsets w.r.t prior-boxes and classes in each resulting localization box)
         locs, classes_scores = self.pred_convs(conv4_3_feats, conv7_feats, conv8_2_feats, conv9_2_feats, conv10_2_feats,
                                                conv11_2_feats)  # (N, 8732, 4), (N, 8732, n_classes)
+        '''
+        # Run auxiliary convolutions (higher level feature map generators)
+        conv8_2_feats, conv9_2_feats, conv10_2_feats = \
+            self.aux_convs(conv7_feats)  # (N, 512, 10, 10),  (N, 256, 5, 5), (N, 256, 3, 3), (N, 256, 1, 1)
+
+        # Run prediction convolutions (predict offsets w.r.t prior-boxes and classes in each resulting localization box)
+        locs, classes_scores = self.pred_convs(conv4_3_feats, conv7_feats, conv8_2_feats, conv9_2_feats, conv10_2_feats)  # (N, 8732, 4), (N, 8732, n_classes)
 
         return locs, classes_scores
 
@@ -374,6 +395,7 @@ class SSD300(nn.Module):
 
         :return: prior boxes in center-size coordinates, a tensor of dimensions (8732, 4)
         """
+        '''
         fmap_dims = {'conv4_3': 38,
                      'conv7': 19,
                      'conv8_2': 10,
@@ -394,6 +416,24 @@ class SSD300(nn.Module):
                          'conv9_2': [1., 2., 3., 0.5, .333],
                          'conv10_2': [1., 2., 0.5],
                          'conv11_2': [1., 2., 0.5]}
+        '''
+        fmap_dims = {'conv4_3': 38,
+                     'conv7': 19,
+                     'conv8_2': 10,
+                     'conv9_2': 5,
+                     'conv10_2': 3}
+
+        obj_scales = {'conv4_3': 0.1,
+                      'conv7': 0.2,
+                      'conv8_2': 0.375,
+                      'conv9_2': 0.55,
+                      'conv10_2': 0.725}
+
+        aspect_ratios = {'conv4_3': [1., 2., 0.5],
+                         'conv7': [1., 2., 3., 0.5, .333],
+                         'conv8_2': [1., 2., 3., 0.5, .333],
+                         'conv9_2': [1., 2., 3., 0.5, .333],
+                         'conv10_2': [1., 2., 0.5]}
 
         fmaps = list(fmap_dims.keys())
 
